@@ -1,45 +1,53 @@
 <!DOCTYPE html>
 
 <html>
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>Rock Paper Scissors Game</title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="style.css">
-    </head>
-    <body>
-        <header>
-            <h1>Trò Chơi Kéo Búa Bao</h1>
-        </header>
 
-        <div class="score-board">
-            <div id="user-label" class="badge">Bạn</div>
-            <div id="computer-label" class="badge">Máy</div>
-            <span id="user-score">0</span>:<span id="computer-score">0</span>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Rock Paper Scissors Game</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <h1>Rock Paper Scissors</h1>
+    </header>
+
+    <div class="score-board">
+        <div id="user-label" class="badge">User</div>
+        <div id="computer-label" class="badge">Comp</div>
+        <span id="user-score">0</span>:<span id="computer-score">0</span>
+    </div>
+
+
+    <div class="result">
+        <p>Paper vs Rock. Paper Wins!!</p>
+    </div>
+
+    <div class="choices">
+        <div class="choice" id="s">
+            ✌️
         </div>
-
-
-        <div class="result">
-            <p>Bao vs Búa. Bao Thắng!!</p>
+        <div class="choice" id="r">
+            ✊
         </div>
-
-        <div class="choices">
-            <div class="choice" id="s">
-                ✌️
-            </div>
-            <div class="choice" id="r">
-                ✊
-            </div>
-            <div class="choice" id="p">
-                🖐️
-            </div>
+        <div class="choice" id="p">
+            🖐️
         </div>
+    </div>
 
-        <p id="action-message">Lượt bạn. </p>
+    <p id="action-message">Your turn. </p>
 
-        
-        <script src="app.js" async defer></script>
-    </body>
+    <div class="web3-container">
+        <button id="connect-wallet-btn">Connect Wallet</button>
+        <button id="start-game-btn" style="display: none;">Pay Fee to Start</button>
+        <p id="wallet-status"></p>
+    </div>
+    <div id="toast" class="toast"></div>
+    <script type="module" src="app.js"></script>
+</body>
+
 </html>

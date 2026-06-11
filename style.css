@@ -87,3 +87,131 @@ header > h1 {
     text-align: center;
     color: #F0f0f0;
 }
+
+/* Web3 Aesthetics */
+.web3-container {
+    margin: 20px auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+#connect-wallet-btn, #start-game-btn {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: white;
+    background: linear-gradient(135deg, #6e8efb, #a777e3);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+#connect-wallet-btn:hover, #start-game-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    background: linear-gradient(135deg, #a777e3, #6e8efb);
+}
+
+#connect-wallet-btn:active, #start-game-btn:active {
+    transform: translateY(1px);
+}
+
+#start-game-btn:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+#wallet-status {
+    font-family: Inter, sans-serif;
+    color: #ffd700;
+    font-size: 1rem;
+    margin-top: 5px;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
+/* Mobile Responsive Design */
+@media screen and (max-width: 600px) {
+    header {
+        padding: 15px;
+    }
+    header > h1 {
+        font-size: 1.5rem;
+    }
+    .score-board {
+        margin: 30px auto 40px;
+        width: 150px;
+        font-size: 35px;
+        padding: 10px 15px;
+    }
+    #user-label {
+        top: 25px;
+        left: -15px;
+        font-size: 12px;
+    }
+    #computer-label {
+        top: 25px;
+        right: -15px;
+        font-size: 12px;
+    }
+    .result {
+        font-size: 20px;
+        padding: 0 15px;
+    }
+    .choices {
+        margin: 30px 0;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .choice {
+        font-size: 45px;
+        padding: 15px;
+        margin: 0;
+    }
+    #connect-wallet-btn, #start-game-btn {
+        padding: 10px 20px;
+        font-size: 1rem;
+    }
+}
+
+/* Toast Notifications */
+.toast {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #E25840;
+    color: #fff;
+    text-align: center;
+    border-radius: 8px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1000;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
+    font-size: 16px;
+}
+
+.toast.show {
+    visibility: visible;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+@keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadeout {
+    from {bottom: 30px; opacity: 1;}
+    to {bottom: 0; opacity: 0;}
+}
