@@ -4,60 +4,62 @@ import { Attribution } from "ox/erc8021";
 // ─── Builder Code (bc_0wp2arli) ───────────────────────────────────────────────
 const DATA_SUFFIX = Attribution.toDataSuffix({ codes: ['bc_0wp2arli'] });
 
-// Instead of alert()
-function showToast(message) {
-    const toast = document.getElementById("toast");
-    if(toast) {
-        toast.innerText = message;
-        toast.className = "toast show";
-        setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
-    }
-}
+// ─── Constants ────────────────────────────────────────────────────────────────
+const BASE_CHAIN_ID  = 8453;
+const BASE_CHAIN_HEX = '0x2105';
+const BASE_RPC       = 'https://mainnet.base.org';
 
-
-// ABI for KBBFees contract (minimal ABI for payGameStart)
+// ─── ABI for KBBFees contract ─────────────────────────────────────────────────
 const KBBFeesABI = [
+    "function gameStartFee() external view returns (uint256)",
     "function payGameStart() external payable",
+    "function totalPlayers() external view returns (uint256)",
     "event GameStartPaid(address indexed player, uint256 amount)"
 ];
 
-// Provide your deployed contract address here later
-const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
-const START_FEE = ethers.parseEther("0.0000003"); // 0.0000003 ETH
+// ─── Contract Address ─────────────────────────────────────────────────────────
+const CONTRACT_ADDRESS =
+    import.meta.env.VITE_CONTRACT_ADDRESS ||
+    '0x0000000000000000000000000000000000000000';
 
-const userScoreSpan = document.querySelector("#user-score");
+// ─── DOM refs ─────────────────────────────────────────────────────────────────
+const userScoreSpan    = document.querySelector("#user-score");
 const computerScoreSpan = document.querySelector("#computer-score");
-const scoreBoardDiv = document.querySelector(".score-board");
-const resultDiv = document.querySelector(".result > p");
-const rockDiv = document.querySelector("#r");
-const paperDiv = document.querySelector("#p");
-const scissorsDiv = document.querySelector("#s");
+const resultDiv        = document.querySelector(".result > p");
+const rockDiv          = document.querySelector("#r");
+const paperDiv         = document.querySelector("#p");
+const scissorsDiv      = document.querySelector("#s");
+const connectBtn       = document.querySelector("#connect-wallet-btn");
+const startGameBtn     = document.querySelector("#start-game-btn");
+const walletStatus     = document.querySelector("#wallet-status");
+const actionMessage    = document.querySelector("#action-message");
 
-const connectBtn = document.querySelector("#connect-wallet-btn");
-const startGameBtn = document.querySelector("#start-game-btn");
-const walletStatus = document.querySelector("#wallet-status");
-const actionMessage = document.querySelector("#action-message");
-
-let userScore = 0;
-let computerScore = 0;
+// ─── State ────────────────────────────────────────────────────────────────────
+let userScore      = 0;
+let computerScore  = 0;
 let hasPaidForRound = false;
+let provider, signer, contract;
 
-let provider;
-let signer;
-let contract;
+// ─── Toast helper ─────────────────────────────────────────────────────────────
+function showToast(message) {
+    const toast = document.getElementById("toast");
+    if (toast) {
+        toast.innerText = message;
+        toast.className = "toast show";
+        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+    }
+}
 
+// ─── Init Web3 ────────────────────────────────────────────────────────────────
 async function initWeb3() {
     if (window.ethereum) {
         provider = new ethers.BrowserProvider(window.ethereum);
         try {
             const accounts = await provider.listAccounts();
-            if (accounts.length > 0) {
-                handleAccountsChanged(accounts);
-            }
+            if (accounts.length > 0) handleAccountsChanged(accounts);
         } catch (err) {
             console.error(err);
         }
-
         window.ethereum.on('accountsChanged', handleAccountsChanged);
         window.ethereum.on('chainChanged', () => window.location.reload());
     } else {
@@ -71,57 +73,90 @@ async function handleAccountsChanged(accounts) {
         connectBtn.style.display = "block";
         startGameBtn.style.display = "none";
     } else {
-        signer = await provider.getSigner();
+        signer   = await provider.getSigner();
         contract = new ethers.Contract(CONTRACT_ADDRESS, KBBFeesABI, signer);
-        
-        walletStatus.innerText = `Connected: ${accounts[0].address.substring(0,6)}...${accounts[0].address.substring(38)}`;
-        connectBtn.style.display = "none";
+        const addr = typeof accounts[0] === 'string' ? accounts[0] : accounts[0].address;
+        walletStatus.innerText = `Connected: ${addr.substring(0, 6)}...${addr.substring(38)}`;
+        connectBtn.style.display  = "none";
         startGameBtn.style.display = "block";
     }
 }
 
+// ─── Connect Wallet ───────────────────────────────────────────────────────────
 connectBtn.addEventListener('click', async () => {
-    if (window.ethereum) {
+    if (!window.ethereum) {
+        showToast("Please install MetaMask or Coinbase Wallet.");
+        return;
+    }
+    try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+        // Auto-switch to Base Mainnet (same as Brick_Breaker)
         try {
-            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-            handleAccountsChanged([accounts[0]]); // Pass as array of strings, ethers handles wrapped addresses
-            
-            // Check network (Base mainnet is 8453)
-            const network = await provider.getNetwork();
-            if (network.chainId !== 8453n && network.chainId !== 84531n) {
-                walletStatus.innerText += " (Please switch to Base Mainnet or Sepolia)";
+            await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: BASE_CHAIN_HEX }],
+            });
+        } catch (switchErr) {
+            if (switchErr.code === 4902) {
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: BASE_CHAIN_HEX,
+                        chainName: 'Base',
+                        nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+                        rpcUrls: [BASE_RPC],
+                        blockExplorerUrls: ['https://basescan.org'],
+                    }],
+                });
+            } else {
+                throw switchErr;
             }
-        } catch (error) {
-            console.error(error);
         }
+
+        const accounts = await provider.listAccounts();
+        handleAccountsChanged(accounts);
+    } catch (error) {
+        console.error(error);
+        showToast("Wallet connection failed.");
     }
 });
 
+// ─── Pay Start Fee (Brick_Breaker pattern: populateTransaction) ───────────────
 startGameBtn.addEventListener('click', async () => {
     if (!contract) return;
+    if (CONTRACT_ADDRESS === '0x0000000000000000000000000000000000000000') {
+        showToast("Contract not deployed yet.");
+        return;
+    }
     try {
-        startGameBtn.innerText = "Processing...";
-        startGameBtn.disabled = true;
-        // Attach builder code via ox/erc8021 Attribution
-        const iface = new ethers.Interface(KBBFeesABI);
-        const calldata = iface.encodeFunctionData("payGameStart", []);
-        const txData = calldata + DATA_SUFFIX.slice(2);
-        const tx = await signer.sendTransaction({
-            to: CONTRACT_ADDRESS,
-            value: START_FEE,
-            data: txData,
-        });
+        startGameBtn.innerText = "Confirming...";
+        startGameBtn.disabled  = true;
+        walletStatus.innerText = "Waiting for wallet signature...";
+
+        // Read fee live from contract (same as Brick_Breaker)
+        const fee = await contract.gameStartFee();
+
+        // Attach builder code via populateTransaction + DATA_SUFFIX (Brick_Breaker pattern)
+        const txReq = await contract.payGameStart.populateTransaction({ value: fee });
+        txReq.data  = txReq.data + DATA_SUFFIX.slice(2); // append builder suffix
+
+        walletStatus.innerText = "Waiting for blockchain confirmation...";
+        const tx = await signer.sendTransaction(txReq);
         await tx.wait();
-        
+
         hasPaidForRound = true;
         startGameBtn.style.display = "none";
-        actionMessage.innerText = "Fee Paid! You can now make your choice.";
-        actionMessage.style.color = "green";
+        actionMessage.innerText    = "Fee Paid! You can now make your choice.";
+        actionMessage.style.color  = "green";
+        walletStatus.innerText     = "Payment successful! ✅";
+        setTimeout(() => { walletStatus.innerText = ""; }, 3000);
     } catch (err) {
         console.error(err);
         showToast("Transaction failed or rejected.");
-        startGameBtn.innerText = "Pay Fee to Start (0.0000003 ETH)";
-        startGameBtn.disabled = false;
+        startGameBtn.innerText = "Pay Fee to Start";
+        startGameBtn.disabled  = false;
+        walletStatus.innerText = "";
     }
 });
 
