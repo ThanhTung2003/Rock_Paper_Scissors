@@ -1,4 +1,8 @@
 import { ethers } from "ethers";
+import { Attribution } from "ox/erc8021";
+
+// ─── Builder Code (bc_0wp2arli) ───────────────────────────────────────────────
+const DATA_SUFFIX = Attribution.toDataSuffix({ codes: ['bc_0wp2arli'] });
 
 // Instead of alert()
 function showToast(message) {
@@ -98,7 +102,15 @@ startGameBtn.addEventListener('click', async () => {
     try {
         startGameBtn.innerText = "Processing...";
         startGameBtn.disabled = true;
-        const tx = await contract.payGameStart({ value: START_FEE });
+        // Attach builder code via ox/erc8021 Attribution
+        const iface = new ethers.Interface(KBBFeesABI);
+        const calldata = iface.encodeFunctionData("payGameStart", []);
+        const txData = calldata + DATA_SUFFIX.slice(2);
+        const tx = await signer.sendTransaction({
+            to: CONTRACT_ADDRESS,
+            value: START_FEE,
+            data: txData,
+        });
         await tx.wait();
         
         hasPaidForRound = true;
@@ -167,17 +179,17 @@ function game(userChoice) {
 function win(userChoice, computerChoice) {
     userScore++;
     userScoreSpan.innerHTML = userScore;
-    resultDiv.innerHTML = ` ${convertKeyWords(userChoice)} VS ${convertKeyWords(computerChoice)} 🔥 You Win! `;
+    resultDiv.innerHTML = ` ${convertKeyWords(userChoice)} vs ${convertKeyWords(computerChoice)} - You Win! `;
 }
 
 function lose(userChoice, computerChoice) {
     computerScore++;
     computerScoreSpan.innerHTML = computerScore;
-    resultDiv.innerHTML = ` Computer chose ${convertKeyWords(computerChoice)} 🤣 You Lose! `;
+    resultDiv.innerHTML = ` Computer chose ${convertKeyWords(computerChoice)} - You Lose! `;
 }
 
 function draw(userChoice, computerChoice) {
-    resultDiv.innerHTML = "It's a Draw 🤗 ";
+    resultDiv.innerHTML = "It's a Draw! ";
 }
 
 function convertKeyWords(letter) {
