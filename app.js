@@ -152,11 +152,16 @@ startGameBtn.addEventListener('click', async () => {
         walletStatus.innerText     = "Payment successful! ✅";
         setTimeout(() => { walletStatus.innerText = ""; }, 3000);
     } catch (err) {
-        console.error(err);
-        showToast("Transaction failed or rejected.");
-        startGameBtn.innerText = "Pay Fee to Start";
-        startGameBtn.disabled  = false;
-        walletStatus.innerText = "";
+        console.warn("Transaction failed:", err.message || err);
+        showToast("Transaction failed, playing for free.");
+        
+        // Fallback to free play just like Brick_Breaker
+        hasPaidForRound = true;
+        startGameBtn.style.display = "none";
+        actionMessage.innerText    = "Playing for free! Make your choice.";
+        actionMessage.style.color  = "orange";
+        walletStatus.innerText     = "Transaction failed. Free mode.";
+        setTimeout(() => { walletStatus.innerText = ""; }, 3000);
     }
 });
 
