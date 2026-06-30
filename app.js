@@ -151,16 +151,19 @@ function getComputerChoice() {
 function game(userChoice) {
     const computerChoice = getComputerChoice();
     switch (userChoice + computerChoice) {
+        // User wins: Rock beats Scissors, Paper beats Rock, Scissors beats Paper
         case "rs":
         case "pr":
         case "sp":
             win(userChoice, computerChoice);
             break;
-        case "rs":
-        case "ps":
+        // User loses: Scissors beats Rock, Rock beats Paper, Paper beats Scissors
         case "sr":
+        case "rp":
+        case "ps":
             lose(userChoice, computerChoice);
             break;
+        // Draw
         case "rr":
         case "pp":
         case "ss":
